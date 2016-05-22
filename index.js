@@ -24,16 +24,18 @@ SensorTag.discover(function(sensorTag) {
     var accelerometer = {x:0, y:0, z:0};
     var magnetometer= {x:0, y:0, z:0};
     var gyroscope = {x:0, y:0, z:0};
+    var objTemperature = 0;
+    var ambTemperature = 0;
 
-    readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope, objectTemperature, ambientTemperature);
+    readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope, objTemperature, ambTemperature);
 
     //for (var i = 0; i < 4; i++) {
-    //    readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope);
+    //    readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,  objTemperature, ambTemperature);
     //}
 });
 
 // watch out: recursive
-function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope) {
+function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope, objTemperature, ambTemperature) {
 
     sensorTag.on('disconnect', function() {
         console.log('disconnected!');
@@ -47,7 +49,7 @@ function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope)
             },
             // temperature
             function(callback) {
-                console.log('enableIrTemperature');
+                //console.log('enableIrTemperature');
                 sensorTag.enableIrTemperature(callback);
             },
             function(callback) {
@@ -55,25 +57,28 @@ function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope)
             },
             function(callback) {
                 if (USE_READ) {
-                    console.log('readIrTemperature');
+                    //console.log('readIrTemperature');
                     sensorTag.readIrTemperature(function(error, objectTemperature, ambientTemperature) {
-                        console.log('\tobject temperature = %d °C', objectTemperature.toFixed(1));
-                        console.log('\tambient temperature = %d °C', ambientTemperature.toFixed(1));
-
+                        //console.log('\tobject temperature = %d °C', objectTemperature.toFixed(1));
+                        //console.log('\tambient temperature = %d °C', ambientTemperature.toFixed(1));
+                        objTemperature = objectTemperature.toFixed(1);
+                        ambTemperature = ambientTemperature.toFixed(1);
                         callback();
                     });
                 } else {
                     sensorTag.on('irTemperatureChange', function(objectTemperature, ambientTemperature) {
-                        console.log('\tobject temperature = %d °C', objectTemperature.toFixed(1));
-                        console.log('\tambient temperature = %d °C', ambientTemperature.toFixed(1))
+                        //console.log('\tobject temperature = %d °C', objectTemperature.toFixed(1));
+                        //console.log('\tambient temperature = %d °C', ambientTemperature.toFixed(1));
+                        objTemperature = objectTemperature.toFixed(1);
+                        ambTemperature = ambientTemperature.toFixed(1);
                     });
 
-                    console.log('setIrTemperaturePeriod');
+                    //console.log('setIrTemperaturePeriod');
                     sensorTag.setIrTemperaturePeriod(500, function(error) {
-                        console.log('notifyIrTemperature');
+                        //console.log('notifyIrTemperature');
                         sensorTag.notifyIrTemperature(function(error) {
                             setTimeout(function() {
-                                console.log('unnotifyIrTemperature');
+                                //console.log('unnotifyIrTemperature');
                                 sensorTag.unnotifyIrTemperature(callback);
                             }, 5000);
                         });
@@ -81,7 +86,7 @@ function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope)
                 }
             },
             function(callback) {
-                console.log('disableIrTemperature');
+                //console.log('disableIrTemperature');
                 sensorTag.disableIrTemperature(callback);
             },
 
@@ -236,8 +241,8 @@ function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope)
                     magnetometer: magnetometer,
                     gyroscope: gyroscope,
                     accelerometer: accelerometer,
-                    objectTemperature: objectTemperature,
-                    ambientTemperature: ambientTemperature
+                    objectTemperature: objTemperature,
+                    ambientTemperature: ambTemperature
                 };
                 payload = JSON.stringify(payload);
                 console.log("PAYLOAD: " + payload);
