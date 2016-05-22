@@ -28,9 +28,10 @@ SensorTag.discover(function(sensorTag) {
     var ambTemperature = 0;
     var temper = 0;
     var humid = 0;
+    var press = 0;
 
     readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,
-        objTemperature, ambTemperature, temper, humid);
+        objTemperature, ambTemperature, temper, humid, press);
 
     //for (var i = 0; i < 4; i++) {
     //    readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,  objTemperature, ambTemperature);
@@ -39,7 +40,7 @@ SensorTag.discover(function(sensorTag) {
 
 // watch out: recursive
 function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,
-                     objTemperature, ambTemperature, temper, humid) {
+                     objTemperature, ambTemperature, temper, humid, press) {
 
     sensorTag.on('disconnect', function() {
         console.log('disconnected!');
@@ -194,7 +195,7 @@ function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,
 
             // humidity
             function(callback) {
-                console.log('enableHumidity');
+                //console.log('enableHumidity');
                 sensorTag.enableHumidity(callback);
             },
             function(callback) {
@@ -235,6 +236,45 @@ function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,
                 sensorTag.disableHumidity(callback);
             },
 
+            // barometer
+            function(callback) {
+                //console.log('enableBarometricPressure');
+                sensorTag.enableBarometricPressure(callback);
+            },
+            function(callback) {
+                setTimeout(callback, 2000);
+            },
+            function(callback) {
+                if (USE_READ) {
+                    //console.log('readBarometricPressure');
+                    sensorTag.readBarometricPressure(function(error, pressure) {
+                        //console.log('\tpressure = %d mBar', pressure.toFixed(1));
+                        press = pressure.toFixed(1);
+                        callback();
+                    });
+                } else {
+                    sensorTag.on('barometricPressureChange', function(pressure) {
+                        //console.log('\tpressure = %d mBar', pressure.toFixed(1));
+                        press = pressure.toFixed(1);
+                    });
+
+                    //console.log('setBarometricPressurePeriod');
+                    sensorTag.setBarometricPressurePeriod(500, function(error) {
+                        //console.log('notifyBarometricPressure');
+                        sensorTag.notifyBarometricPressure(function(error) {
+                            setTimeout(function() {
+                                //console.log('unnotifyBarometricPressure');
+                                sensorTag.unnotifyBarometricPressure(callback);
+                            }, 5000);
+                        });
+                    });
+                }
+            },
+            function(callback) {
+                //console.log('disableBarometricPressure');
+                sensorTag.disableBarometricPressure(callback);
+            },
+
             function(callback) {
                 //console.log('enableGyroscope');
                 sensorTag.enableGyroscope(callback);
@@ -246,9 +286,9 @@ function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,
                 if (USE_READ) {
                     //console.log('readGyroscope');
                     sensorTag.readGyroscope(function(error, x, y, z) {
-                        console.log('\tx = %d °/s', x.toFixed(1));
-                        console.log('\ty = %d °/s', y.toFixed(1));
-                        console.log('\tz = %d °/s', z.toFixed(1));
+                        //console.log('\tx = %d °/s', x.toFixed(1));
+                        //console.log('\ty = %d °/s', y.toFixed(1));
+                        //console.log('\tz = %d °/s', z.toFixed(1));
 
                         gyroscope.x = x.toFixed(1);
                         gyroscope.y = y.toFixed(1);
@@ -292,7 +332,8 @@ function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,
                     objectTemperature: objTemperature,
                     ambientTemperature: ambTemperature,
                     temperature: temper,
-                    humidity: humid
+                    humidity: humid,
+                    pressure: press
                 };
                 payload = JSON.stringify(payload);
                 console.log("PAYLOAD: " + payload);
