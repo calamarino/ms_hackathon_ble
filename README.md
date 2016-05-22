@@ -32,5 +32,7 @@ https://gyp.gsrc.io/
 
 Node dependencies: check `package.json`
 
+just in case: `npm install` and everything should work, tested in Raspberry and PC debian jessie AMD64
+
 
 
