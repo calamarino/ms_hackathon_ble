@@ -31,6 +31,7 @@ https://gyp.gsrc.io/
 - Package: libudev-dev; Versions: 229-5 
 
 Node dependencies: check `package.json`
+
 just in case: `npm install` and everything should work, tested in Raspberry and PC debian jessie AMD64
 
 
