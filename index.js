@@ -26,8 +26,11 @@ SensorTag.discover(function(sensorTag) {
     var gyroscope = {x:0, y:0, z:0};
     var objTemperature = 0;
     var ambTemperature = 0;
+    var temper = 0;
+    var humid = 0;
 
-    readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope, objTemperature, ambTemperature);
+    readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,
+        objTemperature, ambTemperature, temper, humid);
 
     //for (var i = 0; i < 4; i++) {
     //    readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,  objTemperature, ambTemperature);
@@ -35,7 +38,8 @@ SensorTag.discover(function(sensorTag) {
 });
 
 // watch out: recursive
-function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope, objTemperature, ambTemperature) {
+function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,
+                     objTemperature, ambTemperature, temper, humid) {
 
     sensorTag.on('disconnect', function() {
         console.log('disconnected!');
@@ -187,6 +191,50 @@ function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,
                 //console.log('disableMagnetometer');
                 sensorTag.disableMagnetometer(callback);
             },
+
+            // humidity
+            function(callback) {
+                console.log('enableHumidity');
+                sensorTag.enableHumidity(callback);
+            },
+            function(callback) {
+                setTimeout(callback, 2000);
+            },
+            function(callback) {
+                if (USE_READ) {
+                    //console.log('readHumidity');
+                    sensorTag.readHumidity(function(error, temperature, humidity) {
+                        //console.log('\ttemperature = %d °C', temperature.toFixed(1));
+                        //console.log('\thumidity = %d %', humidity.toFixed(1));
+                        temper = temperature.toFixed(1);
+                        humid = humidity.toFixed(1);
+                        callback();
+                    });
+                } else {
+                    sensorTag.on('humidityChange', function(temperature, humidity) {
+                        //console.log('\ttemperature = %d °C', temperature.toFixed(1));
+                        //console.log('\thumidity = %d %', humidity.toFixed(1));
+                        temper = temperature.toFixed(1);
+                        humid = humidity.toFixed(1);
+                    });
+
+                    //console.log('setHumidityPeriod');
+                    sensorTag.setHumidityPeriod(500, function(error) {
+                        //console.log('notifyHumidity');
+                        sensorTag.notifyHumidity(function(error) {
+                            setTimeout(function() {
+                                //console.log('unnotifyHumidity');
+                                sensorTag.unnotifyHumidity(callback);
+                            }, 5000);
+                        });
+                    });
+                }
+            },
+            function(callback) {
+                //console.log('disableHumidity');
+                sensorTag.disableHumidity(callback);
+            },
+
             function(callback) {
                 //console.log('enableGyroscope');
                 sensorTag.enableGyroscope(callback);
@@ -242,7 +290,9 @@ function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,
                     gyroscope: gyroscope,
                     accelerometer: accelerometer,
                     objectTemperature: objTemperature,
-                    ambientTemperature: ambTemperature
+                    ambientTemperature: ambTemperature,
+                    temperature: temper,
+                    humidity: humid
                 };
                 payload = JSON.stringify(payload);
                 console.log("PAYLOAD: " + payload);
@@ -252,10 +302,19 @@ function readAndSend(sensorTag, payload, accelerometer, magnetometer, gyroscope,
                     'Authorization': 'Basic' + new Buffer('demo' + ':' + 'demo').toString('base64')
                 };
 
+                //var options = {
+                //    host: '10.10.150.222',
+                //    path: '/servoy-service/rest_ws/msbd/free/ti_sensor/', // '/users/1',
+                //    port: 9090,
+                //    method: 'POST',
+                //    headers: headers
+                //};
+
+                // http://demo:demo@ms.servoy.com:8080/mshackaton/servoy-service/rest_ws/msbd/free/{entity}
                 var options = {
-                    host: '10.10.150.222',
-                    path: '/servoy-service/rest_ws/msbd/free/ti_sensor/post_tests', // '/users/1',
-                    port: 9090,
+                    host: 'ms.servoy.com',
+                    path: '/mshackaton/servoy-service/rest_ws/msbd/free/ti_sensor',
+                    port: '8080',
                     method: 'POST',
                     headers: headers
                 };
